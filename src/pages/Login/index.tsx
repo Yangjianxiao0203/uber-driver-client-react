@@ -1,37 +1,34 @@
-import React,{useContext, useState} from "react";
+import React,{useState,useContext} from "react";
 import { Identity,IdentityType,serverUrl} from "../../constant";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../utils/AuthProvider";
-
-interface RegisterRequest {
+interface LoginRequest {
     phoneNumber: string;
-    secretKey: string;
-    identity: IdentityType;
+    password: string;
 }
 
-const Register = () => {
+const Login = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
-    const [identity, setIdentity] = useState<IdentityType>(Identity.Passenger);
     const navigate = useNavigate();
 
     const authContext = useContext(AuthContext);
     if(!authContext) {
         throw new Error('AuthContext is null');
     }
+
     const {setAuthToken} = authContext;
 
     const submitForm = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const data: RegisterRequest = {
+        const data: LoginRequest = {
             phoneNumber,
-            secretKey: password,
-            identity
+            password,
         }
         try {
-            const response = await axios.post(`${serverUrl}/user`, data);
+            const response = await axios.get(`${serverUrl}/login`, {params: data});
             console.log(response);
             const token = response.data.data;
             localStorage.setItem('token', token);
@@ -52,15 +49,8 @@ const Register = () => {
           Password:
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
-        <label>
-            Identity:
-            <select value={identity} onChange={(e) => setIdentity(e.target.value as IdentityType)}>
-                <option value={Identity.Driver}>Driver</option>
-                <option value={Identity.Passenger}>Passenger</option>
-            </select>
-        </label>
-        <input type="submit" value="Register" />
+        <input type="submit" value="Login" />
       </form>
     )
 }
-export default Register;
+export default Login;
