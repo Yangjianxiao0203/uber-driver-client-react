@@ -18,7 +18,7 @@ const Login = () => {
         throw new Error('AuthContext is null');
     }
 
-    const {setAuthToken} = authContext;
+    const {auth,setAuthToken} = authContext;
 
     const submitForm = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -33,7 +33,7 @@ const Login = () => {
             const token = response.data.data;
             localStorage.setItem('token', token);
             setAuthToken(token);
-            navigate('/');
+            navigate('/passenger');
         } catch (error) {
             console.log(error);
         }

@@ -14,12 +14,20 @@ interface ConnectionOptions {
     password: string;
 }
 // mqtt: buffer is not defined error: https://github.com/mqttjs/MQTT.js/issues/1412#issuecomment-1046369875  node_modules/mqtt create webpack.config.js
-const MqttConnector = () => {
+
+interface MqttConnectorProps {
+  userName: string;
+  password: string;
+  topic: string;
+}
+const MqttConnector = ({userName,password,topic}:MqttConnectorProps) => {
 
     const [client, setClient] = useState<MqttClient | null>(null);
     const [connecting, setConnecting] = useState(false);
     // const [subscribeSuccess, setSubscribeSuccess] = useState(false);
     const [receivedMessage, setReceivedMessage] = useState('');
+
+    const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
     const createConnection = () => {
         setConnecting(true);
@@ -35,8 +43,8 @@ const MqttConnector = () => {
           reconnectPeriod: 4000,
           clientId: "driver_" + Math.random().toString(16).substr(2, 8),
           // auth
-          username: "driver",
-          password: "distinctive0930",
+          username: userName,
+          password: password,
         };
     
         const connectUrl = `${connectionOptions.protocol}://${connectionOptions.host}:${connectionOptions.port}${connectionOptions.endpoint}`;
@@ -50,6 +58,12 @@ const MqttConnector = () => {
     
         mqttClient.on("reconnect", () => {
           console.log("Reconnecting...");
+          if (reconnectAttempts >= 5) { // 如果重连次数超过5次
+            console.log("Max reconnect attempts reached. Stopping...");
+            mqttClient.end(); // 停止重连
+          } else {
+            setReconnectAttempts(reconnectAttempts + 1); // 增加重连次数
+          }
         });
     
         mqttClient.on("error", (error) => {
@@ -75,11 +89,11 @@ const MqttConnector = () => {
 
     
     useEffect(() => {
-        // createConnection();
+        createConnection();
         return () => {
             destroyConnection();
         };
-    }, [client]);
+    }, []);
 
     return (
       <div>

@@ -11,6 +11,18 @@ export default function Root() {
     }
     const {auth} = authContext;
 
+    //获取当前位置
+    const [position, setPosition] = useState({latitude: 0, longitude: 0});
+    useEffect(() => {
+        navigator.geolocation.getCurrentPosition((position) => {
+            setPosition({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            })
+        }, (error) => {
+            console.log(error);
+        })
+    }, [])
 
   return <div>hello {auth}</div>;
 }

@@ -6,7 +6,8 @@ import MqttConnector from './components/MqttConnector';
 import Root from './pages/Root';
 import Register from './pages/Register';
 import Login from './pages/Login';
-
+import Driver from './pages/Driver';
+import Passenger from './pages/Passenger';
 import AuthProvider from './utils/AuthProvider';
 
 function App() {
@@ -18,8 +19,9 @@ function App() {
           <Route path="/" element={<Root />} />
           <Route path='/login' element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/google-map" element={<GoogleMap />} />
-          <Route path="/mqtt" element={<MqttConnector />} />
+          <Route path="/google-map" element={<GoogleMap />} /> 
+          <Route path='/driver' element={<Driver />}/>
+          <Route path='/passenger' element={<Passenger />}/>
         </Routes>
       </Router>
     </AuthProvider>
