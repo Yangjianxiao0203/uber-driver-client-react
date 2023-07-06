@@ -1,25 +1,28 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React,{useEffect} from 'react';
+import './App.scss';
+import { Route,Routes,BrowserRouter as Router } from 'react-router-dom';
+import GoogleMap from './pages/GoogleMap';
+import MqttConnector from './components/MqttConnector';
+import Root from './pages/Root';
+import Register from './pages/Register';
+import {setAuthToken} from './utils/setAuthToken';
 
 function App() {
+
+  useEffect(() => {
+    if (localStorage.token) {
+      setAuthToken(localStorage.token);
+    }
+  },[localStorage.token])
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Register />} />
+        <Route path="/google-map" element={<GoogleMap />} />
+        <Route path="/mqtt" element={<MqttConnector />} />
+      </Routes>
+    </Router>
   );
 }
 
