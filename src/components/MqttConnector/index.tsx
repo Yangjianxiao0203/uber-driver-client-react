@@ -19,13 +19,16 @@ interface MqttConnectorProps {
   userName: string;
   password: string;
   topic: string;
+  qos: 0 | 1 | 2;
+  setForm: React.Dispatch<React.SetStateAction<any[]>>
 }
-const MqttConnector = ({userName,password,topic}:MqttConnectorProps) => {
+const MqttConnector = ({userName,password,topic,qos,setForm}:MqttConnectorProps) => {
 
     const [client, setClient] = useState<MqttClient | null>(null);
     const [connecting, setConnecting] = useState(false);
-    // const [subscribeSuccess, setSubscribeSuccess] = useState(false);
+
     const [receivedMessage, setReceivedMessage] = useState('');
+
 
     const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
@@ -54,6 +57,14 @@ const MqttConnector = ({userName,password,topic}:MqttConnectorProps) => {
         mqttClient.on("connect", () => {
           setConnecting(false);
           console.log("Connection succeeded!");
+            // Subscribe to the topic
+          mqttClient.subscribe(topic, {qos: qos}, (error) => {
+            if (error) {
+              console.log('Error subscribing to topic:', error);
+            } else {
+              console.log(`Successfully subscribed to topic: ${topic}`);
+            }
+          });
         });
     
         mqttClient.on("reconnect", () => {
@@ -71,8 +82,13 @@ const MqttConnector = ({userName,password,topic}:MqttConnectorProps) => {
         });
     
         mqttClient.on("message", (topic, message) => {
+          const newRide = JSON.parse(message.toString());
           setReceivedMessage(message.toString());
           console.log(`Received message ${message} from topic ${topic}`);
+          setForm((prev) => {
+            //todo: if not created, delete it from the list
+            return [...prev,newRide]
+          })
         });
     
         setClient(mqttClient);

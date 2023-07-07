@@ -3,6 +3,7 @@ import { Identity,IdentityType,serverUrl} from "../../constant";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../utils/AuthProvider";
+import { Link } from "react-router-dom";
 interface LoginRequest {
     phoneNumber: string;
     password: string;
@@ -40,17 +41,20 @@ const Login = () => {
     }
 
     return (
-      <form onSubmit={submitForm}>
-        <label>
-          Phone Number:
-          <input type="text" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
-        </label>
-        <label>
-          Password:
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        </label>
-        <input type="submit" value="Login" />
-      </form>
+      <>
+        <form onSubmit={submitForm}>
+          <label>
+            Phone Number:
+            <input type="text" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+          </label>
+          <label>
+            Password:
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </label>
+          <input type="submit" value="Login" />
+        </form>
+        <Link to="/register">Register</Link>
+      </>
     )
 }
 export default Login;

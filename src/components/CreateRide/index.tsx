@@ -9,19 +9,18 @@ const CreateRide = () => {
     const [pickUpLong, setPickUpLong] = useState("");
     const [pickUpLat, setPickUpLat] = useState("");
     const [desResolvedAddress, setDesResolvedAddress] = useState("");
+    const [type,setType] = useState("Economy"); //   Economy,Comfort,Luxury
     const [province, setProvince] = useState("");
     const [city, setCity] = useState("");
     const [loading, setLoading] = useState(true); // New loading state
 
     const authContext = useContext(AuthContext); // Get the AuthContext
 
-    // Use an effect to set the token when the component mounts
     useEffect(() => {
-        if (authContext && authContext.auth) {
-            authContext.setAuthToken(authContext.auth);
-            console.log(authContext.auth);
-        }
-    }, [authContext]);
+        if(!authContext) {return;}
+        axios.defaults.headers.common["x-auth-token"] = authContext.auth;
+        console.log("axios header: " + axios.defaults.headers.common["x-auth-token"])
+    },[])
 
     const getUser = async () => {
         setLoading(true);
@@ -32,14 +31,14 @@ const CreateRide = () => {
             return response.data.data;
         } catch (error : any) {
             console.log(error.message);
-            setLoading(false); // Also set loading to false in case of error
+            setLoading(false); 
         }
     };
 
     // Call getUser when the component mounts
     useEffect(() => {
         getUser();
-    }, []); // Pass an empty dependency array to run this effect once on mount
+    }, []); 
 
     const handleSubmit = async (e : any) => {
         e.preventDefault();
@@ -48,14 +47,16 @@ const CreateRide = () => {
             uid: uid,
             pickUpLong,
             pickUpLat,
-            pickUpResolvedAddress:pickUpLong+pickUpLat,
+            pickUpResolvedAddress:pickUpLong+","+pickUpLat,
             desResolvedAddress,
-            type: Identity.Passenger,
+            type,
             province,
             city,
         };
 
         try {
+            console.log(JSON.stringify(ride));
+
             const response = await axios.post(`${serverUrl}/ride`, ride);
             console.log(response.data);
         } catch (error) {
@@ -77,6 +78,12 @@ const CreateRide = () => {
             <input type="text" value={pickUpLat} onChange={(e) => setPickUpLat(e.target.value)} />
             <label>Destination Resolved Address: </label>
             <input type="text" value={desResolvedAddress} onChange={(e) => setDesResolvedAddress(e.target.value)} />
+            <label>Type: </label>
+            <select value={type} onChange={(e)=>{setType(e.target.value)}}>
+                <option value="Economy">Economy</option>
+                <option value="Comfort">Comfort</option>
+                <option value="Luxury">Luxury</option>
+            </select>
             <label>Province: </label>
             <input type="text" value={province} onChange={(e) => setProvince(e.target.value)} />
             <label>City: </label>

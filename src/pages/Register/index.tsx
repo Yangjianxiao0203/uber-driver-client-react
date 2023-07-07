@@ -1,7 +1,7 @@
 import React,{useContext, useState} from "react";
 import { Identity,IdentityType,serverUrl} from "../../constant";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../utils/AuthProvider";
 
 interface RegisterRequest {
@@ -43,6 +43,7 @@ const Register = () => {
     }
 
     return (
+    <>
       <form onSubmit={submitForm}>
         <label>
           Phone Number:
@@ -61,6 +62,8 @@ const Register = () => {
         </label>
         <input type="submit" value="Register" />
       </form>
+      <Link to="/login">Login</Link>
+    </>
     )
 }
 export default Register;
