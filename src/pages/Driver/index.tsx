@@ -5,6 +5,15 @@ import {AuthContext} from "../../utils/AuthProvider";
 import MqttConnector from "../../components/MqttConnector";
 import { sortRides,distance } from "../../utils/rideForm";
 import RideItem from "../../components/RideItem";
+
+interface DriverAcceptOrderRequestProps {
+    driverUid: string;
+    longitude: string;
+    latitude: string;
+    numberPlate: string;
+    vehicleInfo: string;
+}
+
 const Driver = () => {
 
     const [driver, setDriver] = useState<any>(null);
@@ -50,11 +59,27 @@ const Driver = () => {
         }
     }
 
+    // accept order logic
+    const handleOrder = async (rid:string) => {
+        console.log(`trying to accept Order ${rid}.`);
+        const driverAcceptOrderRequest: DriverAcceptOrderRequestProps = {
+            driverUid: driver.id,
+            longitude: position.longitude.toString(),
+            latitude: position.latitude.toString(),
+            numberPlate: "",
+            vehicleInfo: ""
+        }
+        try {
+            const res= await axios.put(`${serverUrl}/ride/${rid}`,driverAcceptOrderRequest);
+            const channel = res.data.data;
+            console.log(channel);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
     // build up form
     const [form, setForm] = useState<any[]>([]);
-    const handleOrder = (orderId:string) => {
-        console.log(`trying to accept Order ${orderId}.`);
-    };
     const [isLoading, setIsLoading] = useState(false);
     const formElement = sortRides(form,position.latitude,position.longitude).map((rideItem:any)=>{
         return <RideItem item={rideItem} handleOrder={handleOrder} key={rideItem.id} isLoading={isLoading}/>
