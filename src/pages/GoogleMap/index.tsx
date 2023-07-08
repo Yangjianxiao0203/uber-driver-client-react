@@ -1,4 +1,4 @@
-import React, {useEffect,useState,useRef} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import './styles.scss';
 
 interface Position {
@@ -6,11 +6,18 @@ interface Position {
     lng: number;
 }
 
-const GoogleMap = () => {
-    const [currentPosition, setCurrentPosition] = useState<Position>({ lat: 0, lng: 0});
-    const [pathCoordinates, setPathCoordinates] = useState<Position[]>([]);
+interface GoogleMapProps {
+    currentPosition: Position;
+    pathCoordinates: Position[];
+    startPosition: Position | null;
+    endPosition: Position | null;
+}
+
+const GoogleMap = ({currentPosition, pathCoordinates, startPosition, endPosition}: GoogleMapProps) => {
     const mapRef = useRef<google.maps.Map | null>(null);
     const markerRef = useRef<google.maps.Marker | null>(null);
+    const startMarkerRef = useRef<google.maps.Marker | null>(null);
+    const endMarkerRef = useRef<google.maps.Marker | null>(null);
     const pathLineRef = useRef<google.maps.Polyline | null>(null);
     const positionWatcherRef = useRef<number | null>(null);
 
@@ -18,14 +25,30 @@ const GoogleMap = () => {
         const map = new google.maps.Map(document.getElementById("map") as HTMLElement, {
             zoom: 4,
             center: currentPosition,
-          });
+        });
         mapRef.current = map;
 
         const marker = new google.maps.Marker({
             position: currentPosition,
             map: map,
-          });
+        });
         markerRef.current = marker;
+
+        if (startPosition) {
+            const startMarker = new google.maps.Marker({
+                position: startPosition,
+                map: map,
+            });
+            startMarkerRef.current = startMarker;
+        }
+
+        if (endPosition) {
+            const endMarker = new google.maps.Marker({
+                position: endPosition,
+                map: map,
+            });
+            endMarkerRef.current = endMarker;
+        }
 
         const pathLine = new google.maps.Polyline({
             path: pathCoordinates,
@@ -34,32 +57,25 @@ const GoogleMap = () => {
             strokeOpacity: 1.0,
             strokeWeight: 2,
             map: map,
-          });
+        });
         pathLineRef.current = pathLine;
     }
 
     const startWatchingPosition = () => {
         if (!navigator.geolocation) {
-          alert('Geolocation is not supported by your browser');
-          return;
+            alert('Geolocation is not supported by your browser');
+            return;
         }
-    
+
         positionWatcherRef.current = window.setInterval(() => {
-          navigator.geolocation.getCurrentPosition((position) => {
-            const newCurrentPosition = { lat: position.coords.latitude, lng: position.coords.longitude };
-            setCurrentPosition(newCurrentPosition);
-    
             if (markerRef.current && mapRef.current && pathLineRef.current) {
-              markerRef.current.setPosition(newCurrentPosition);
-              mapRef.current.setCenter(newCurrentPosition);
-              setPathCoordinates((prevPathCoordinates) => [...prevPathCoordinates, newCurrentPosition]);
-              pathLineRef.current.setPath(pathCoordinates);
+                markerRef.current.setPosition(currentPosition);
+                mapRef.current.setCenter(currentPosition);
+                pathLineRef.current.setPath(pathCoordinates);
             }
-          }, () => {
-            alert('Unable to retrieve your location');
-          });
         }, 2000);
     };
+
     const stopWatchingPosition = () => {
         if (positionWatcherRef.current) {
             window.clearInterval(positionWatcherRef.current);
@@ -76,18 +92,36 @@ const GoogleMap = () => {
             document.head.appendChild(script);
       
             script.onload = () => {
-              initMap();
-              startWatchingPosition();
+                initMap();
+                startWatchingPosition();
             }
-          } else {
+        } else {
             initMap();
             startWatchingPosition();
-          }
-        
-        return () => {
-        stopWatchingPosition();
         }
-    },[])
+
+        return () => {
+            stopWatchingPosition();
+        };
+    },[]);
+
+    useEffect(() => {
+        if (markerRef.current) {
+            markerRef.current.setPosition(currentPosition);
+        }
+
+        if (startMarkerRef.current && startPosition) {
+            startMarkerRef.current.setPosition(startPosition);
+        }
+
+        if (endMarkerRef.current && endPosition) {
+            endMarkerRef.current.setPosition(endPosition);
+        }
+
+        if (pathLineRef.current) {
+            pathLineRef.current.setPath(pathCoordinates);
+        }
+    }, [currentPosition, startPosition, endPosition, pathCoordinates]);
 
     return (
         <>

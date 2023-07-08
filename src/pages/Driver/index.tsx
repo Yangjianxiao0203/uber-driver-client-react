@@ -73,6 +73,7 @@ const Driver = () => {
             const res= await axios.put(`${serverUrl}/ride/${rid}`,driverAcceptOrderRequest);
             const channel = res.data.data;
             console.log(channel);
+            
         } catch (error) {
             console.log(error);
         }
