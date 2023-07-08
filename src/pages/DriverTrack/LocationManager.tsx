@@ -44,11 +44,13 @@ export const LocationManager: React.FC<LocationManagerProps> = ({
         if(client) {
             client.on("message", (channelName, message) => {
                 const messageData = JSON.parse(message.toString());
-                if (messageData.action === '') {
+                if (messageData.action === '' && rideStatus === '') {
                     setPassengerPosition({
                         lat: messageData.lat,
                         lng: messageData.lng
                     });
+                } else  {
+                    setRideStatus(messageData.action);
                 }
             });
         }

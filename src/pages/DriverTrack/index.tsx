@@ -5,6 +5,7 @@ import GoogleMap from "../GoogleMap";
 import { ConnectionManager } from "./ConnectionManager";
 import {LocationManager} from "./LocationManager";
 import { RideManager } from "./RideManager";
+import { TrackProps } from "../../constant";
 
 interface Position {
     lat: number;
@@ -25,11 +26,16 @@ const DriverTrack: React.FC<DriverTrackProps> = ({userName,password,rid,channelN
     const [driverPosition, setDriverPosition] = useState<Position>({ lat: 0, lng: 0});
     const [passengerPosition, setPassengerPosition] = useState<Position>({ lat: 0, lng: 0});
     const [pathCoordinates, setPathCoordinates] = useState<Position[]>([]);
+    const [speed, setSpeed] = useState(0);
 
     const handleClickPickedUpPassenger = () => {
         if(client) {
-            const message = {
-                action: 'PickedUpPassenger'
+            const message:TrackProps = {
+                action: 'PickedUpPassenger',
+                lat: driverPosition.lat.toString(),
+                long: driverPosition.lng.toString(),
+                user:"driver",
+                speed: speed.toString()
             };
             client.publish(channelName, JSON.stringify(message));
         }
@@ -38,7 +44,11 @@ const DriverTrack: React.FC<DriverTrackProps> = ({userName,password,rid,channelN
     const handleClickArrived = () => {
         if(client) {
             const message = {
-                action: 'Arrived'
+                action: 'Arrived',
+                lat: driverPosition.lat.toString(),
+                long: driverPosition.lng.toString(),
+                user:"driver",
+                speed: speed.toString()
             };
             client.publish(channelName, JSON.stringify(message));
         }
