@@ -36,6 +36,7 @@ export const LocationManager: React.FC<LocationManagerProps> = ({
                     lng: position.coords.longitude
                 });
                 client.publish(channelName, JSON.stringify(message));
+                console.log("driver set current position: ",{lat: position.coords.latitude,lng: position.coords.longitude})
             }
         });
     }

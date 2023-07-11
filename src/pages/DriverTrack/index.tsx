@@ -6,20 +6,16 @@ import { ConnectionManager } from "./ConnectionManager";
 import {LocationManager} from "./LocationManager";
 import { RideManager } from "./RideManager";
 import { TrackProps } from "../../constant";
+import { useParams } from "react-router-dom";
+import { Position } from "../../constant";
 
-interface Position {
-    lat: number;
-    lng: number;
-}
+const DriverTrack = () => {
 
-interface DriverTrackProps {
-    userName: string;
-    password: string;
-    rid: string;
-    channelName: string;
-}
+    const {rid,channelName} = useParams<{rid:string, channelName:string}>();
+    if(rid===undefined || channelName === undefined) {
+        throw new Error("rid or channelName is undefined");
+    }
 
-const DriverTrack: React.FC<DriverTrackProps> = ({userName,password,rid,channelName}) => {
     const [client, setClient] = useState<MqttClient | null>(null);
     const [connecting, setConnecting] = useState(false);
     const [ride, setRide] = useState<any>(null);
@@ -50,20 +46,23 @@ const DriverTrack: React.FC<DriverTrackProps> = ({userName,password,rid,channelN
                 user:"driver",
                 speed: speed.toString()
             };
-            client.publish(channelName, JSON.stringify(message));
+            client.publish(channelName!, JSON.stringify(message));
         }
+    }
+
+    const initConnection = async () => {
+
     }
 
     return (
         <div>
             <ConnectionManager
-                userName={userName}
-                password={password}
+                userName={"track-"+rid}
+                password={rid+Math.random().toString(16).substr(2, 8)}
                 channelName={channelName}
                 setClient={setClient}
                 setConnecting={setConnecting}
             />
-
             <LocationManager
                 client={client}
                 channelName={channelName}
@@ -71,10 +70,10 @@ const DriverTrack: React.FC<DriverTrackProps> = ({userName,password,rid,channelN
                 setPassengerPosition={setPassengerPosition}
                 setPathCoordinates={setPathCoordinates}
             />
-
             <RideManager
                 rid={rid}
                 setRide={setRide}
+                position={driverPosition}
             />
 
             {connecting ? (

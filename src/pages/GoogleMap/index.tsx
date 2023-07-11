@@ -15,19 +15,24 @@ interface GoogleMapProps {
 
 const GoogleMap = ({currentPosition, pathCoordinates, startPosition, endPosition}: GoogleMapProps) => {
     const mapRef = useRef<google.maps.Map | null>(null);
+    const mapContainerRef = useRef<HTMLDivElement | null>(null);
     const markerRef = useRef<google.maps.Marker | null>(null);
     const startMarkerRef = useRef<google.maps.Marker | null>(null);
     const endMarkerRef = useRef<google.maps.Marker | null>(null);
     const pathLineRef = useRef<google.maps.Polyline | null>(null);
     const positionWatcherRef = useRef<number | null>(null);
 
+    console.log("currentPosition: ",currentPosition);
+    console.log("startPosition: ",startPosition);
+    console.log("endPostion: ",endPosition);
+
     const initMap = () => {
+        if (!mapContainerRef.current) return;  // Return if the map container is not mounted yet
         const map = new google.maps.Map(document.getElementById("map") as HTMLElement, {
             zoom: 4,
             center: currentPosition,
         });
         mapRef.current = map;
-
         const marker = new google.maps.Marker({
             position: currentPosition,
             map: map,
@@ -92,6 +97,7 @@ const GoogleMap = ({currentPosition, pathCoordinates, startPosition, endPosition
             document.head.appendChild(script);
       
             script.onload = () => {
+                console.log("google map loading");
                 initMap();
                 startWatchingPosition();
             }
@@ -108,25 +114,50 @@ const GoogleMap = ({currentPosition, pathCoordinates, startPosition, endPosition
     useEffect(() => {
         if (markerRef.current) {
             markerRef.current.setPosition(currentPosition);
+        } else if (mapRef.current) {
+            markerRef.current = new google.maps.Marker({
+                position: currentPosition,
+                map: mapRef.current,
+            });
         }
-
+    
         if (startMarkerRef.current && startPosition) {
             startMarkerRef.current.setPosition(startPosition);
+        } else if (mapRef.current && startPosition) {
+            startMarkerRef.current = new google.maps.Marker({
+                position: startPosition,
+                map: mapRef.current,
+            });
         }
-
+    
         if (endMarkerRef.current && endPosition) {
             endMarkerRef.current.setPosition(endPosition);
+        } else if (mapRef.current && endPosition) {
+            endMarkerRef.current = new google.maps.Marker({
+                position: endPosition,
+                map: mapRef.current,
+            });
         }
-
+    
         if (pathLineRef.current) {
             pathLineRef.current.setPath(pathCoordinates);
+        } else if (mapRef.current) {
+            pathLineRef.current = new google.maps.Polyline({
+                path: pathCoordinates,
+                geodesic: true,
+                strokeColor: "#FF0000",
+                strokeOpacity: 1.0,
+                strokeWeight: 2,
+                map: mapRef.current,
+            });
         }
     }, [currentPosition, startPosition, endPosition, pathCoordinates]);
+    
 
     return (
         <>
             <h1>GoogleMap</h1>
-            <div id='map'></div>
+            <div ref={mapContainerRef} id='map'></div>
         </>
     );
 }

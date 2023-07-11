@@ -5,6 +5,7 @@ import {AuthContext} from "../../utils/AuthProvider";
 import MqttConnector from "../../components/MqttConnector";
 import { sortRides,distance } from "../../utils/rideForm";
 import RideItem from "../../components/RideItem";
+import { useNavigate } from "react-router-dom";
 
 interface DriverAcceptOrderRequestProps {
     driverUid: string;
@@ -18,6 +19,7 @@ const Driver = () => {
 
     const [driver, setDriver] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     //get self location
     const [position, setPosition] = useState({latitude: 0, longitude: 0});
@@ -53,7 +55,6 @@ const Driver = () => {
             const res = await axios.put(`${serverUrl}/user/${user.uid}`, user);
             setDriver(user);
             setLoading(false);
-            console.log("update driver: " + res);
         } catch (error) {
             console.log(error);
         }
@@ -63,7 +64,7 @@ const Driver = () => {
     const handleOrder = async (rid:string) => {
         console.log(`trying to accept Order ${rid}.`);
         const driverAcceptOrderRequest: DriverAcceptOrderRequestProps = {
-            driverUid: driver.id,
+            driverUid: driver.uid,
             longitude: position.longitude.toString(),
             latitude: position.latitude.toString(),
             numberPlate: "",
@@ -72,8 +73,10 @@ const Driver = () => {
         try {
             const res= await axios.put(`${serverUrl}/ride/${rid}`,driverAcceptOrderRequest);
             const channel = res.data.data;
-            console.log(channel);
-            
+            console.log("track channel: ",channel);
+            // navigate to driver track page
+            navigate(`/driver/${rid}/${channel}`);
+
         } catch (error) {
             console.log(error);
         }

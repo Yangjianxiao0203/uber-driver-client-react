@@ -7,6 +7,7 @@ const Passenger = () => {
 
     const [isLoading, setIsLoading] = useState(false);
     const [rides, setRides] = useState<any>([]);
+    const [fetchSuccess, setFetchSuccess] = useState(false);
 
     const fetchRidesAccepted = async () => {
         setIsLoading(true);
@@ -16,6 +17,8 @@ const Passenger = () => {
             const rides = response.data.data;
             setRides(rides);
             setIsLoading(false);
+            setFetchSuccess(true);
+            console.log("fetch rides success");
         } catch (error) {
             console.log(error);
             setIsLoading(false);
@@ -25,10 +28,14 @@ const Passenger = () => {
     // fetch ride every 5 seconds
     useEffect(()=>{
         const interval = setInterval(()=>{
+            if(fetchSuccess) {
+                clearInterval(interval);
+                return;
+            }
             fetchRidesAccepted();
         }, 5000);
         return () => clearInterval(interval);
-    },[])
+    },[fetchSuccess])
 
     return (
         <>
