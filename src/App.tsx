@@ -9,6 +9,9 @@ import Login from './pages/Login';
 import Driver from './pages/Driver';
 import Passenger from './pages/Passenger';
 import AuthProvider from './utils/AuthProvider';
+import DriverTracking from './pages/DriverTracking';
+import Map from './components/Map';
+import PassengerTracking from './pages/PassengerTracking';
 
 function App() {
 
@@ -19,9 +22,10 @@ function App() {
           <Route path="/" element={<Root />} />
           <Route path='/login' element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/google-map" element={<GoogleMap />} /> 
           <Route path='/driver' element={<Driver />}/>
           <Route path='/passenger' element={<Passenger />}/>
+          <Route path='/driver/:rid/:channelName' element={<DriverTracking />} />
+          <Route path='/passenger/:rid/:channelName' element={<PassengerTracking />} />
         </Routes>
       </Router>
     </AuthProvider>

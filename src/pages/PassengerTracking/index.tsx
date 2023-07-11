@@ -1,11 +1,8 @@
-import exp from "constants";
-import mqtt,{ MqttClient } from "mqtt";
-import React,{useState,useEffect} from "react";
-import { useParams } from "react-router-dom";
-import { ConnectionOptions } from "../../constant";
-import { Position } from "../../constant";
-import Map from "../../components/Map";
-
+import { useParams } from "react-router-dom"
+import { useState,useEffect } from "react"
+import { ConnectionOptions,Position } from "../../constant"
+import mqtt,{ MqttClient } from "mqtt"
+import Map from "../../components/Map"
 
 const connectionOptions: ConnectionOptions = {
     protocol: "ws",
@@ -20,10 +17,7 @@ const connectionOptions: ConnectionOptions = {
     password: "",
 }
 
-var startPosition:Position | null =null;
-
-const DriverTracking = () => {
-
+const PassengerTracking: React.FC = () => {
     const {rid,channelName} = useParams<{rid:string, channelName:string}>();
     if(rid===undefined || channelName === undefined) {
         throw new Error("rid or channelName is undefined");
@@ -39,7 +33,7 @@ const DriverTracking = () => {
     const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
     //connecting to mqtt broker
-    connectionOptions.username = "track-"+rid;
+    connectionOptions.username = "track-"+rid+"passenger";
     connectionOptions.password = rid+Math.random().toString(16).substr(2, 8);
     const connectUrl = `${connectionOptions.protocol}://${connectionOptions.host}:${connectionOptions.port}${connectionOptions.endpoint}`;
 
@@ -77,12 +71,10 @@ const DriverTracking = () => {
         const mqttClient = mqttConnection(connectUrl,connectionOptions,channelName);
         setClient(mqttClient);
         console.log("mqttClient: ",mqttClient);
-
         mqttClient.on('message', function (topic, message) {
-            console.log(`Received message on ${topic}: ${message.toString()}`);
             const msgData = JSON.parse(message.toString());
             console.log("msgData: ",msgData);
-            setPassengerPosition({ lat: msgData.lat, lng: msgData.lng });
+            setDriverPosition({ lat: msgData.lat, lng: msgData.lng });
             setRideStatus(msgData.action);
         });
 
@@ -95,16 +87,14 @@ const DriverTracking = () => {
     const [rideStatus,setRideStatus] = useState("");
 
     //get driver current position
-    const getDriverPosition = () => {
+    const getPassengerPosition = () => {
         navigator.geolocation.getCurrentPosition((position) => {
             const { latitude, longitude } = position.coords;
-            const currentPosition : Position= { lat: latitude, lng: longitude };
-            setDriverPosition(currentPosition);
-
-            if(startPosition === null) { startPosition = currentPosition;}
+            const currentPosition : Position= { lat: latitude-0.1, lng: longitude-0.1 };
+            setPassengerPosition(currentPosition);
             const message = {
-                lat: latitude,
-                lng: longitude,
+                lat: currentPosition.lat,
+                lng: currentPosition.lng,
                 action:rideStatus
             }
             client!.publish(channelName, JSON.stringify(message));
@@ -113,13 +103,11 @@ const DriverTracking = () => {
             console.log('Geolocation Error: ', error);
         })
     }
-
-    
     useEffect(() => {
         let interval:any;
         if(client) {
             interval = setInterval(() => {
-                getDriverPosition();
+                getPassengerPosition();
             }, 2000)
         } else {
             console.log("client is not ready, cannot get driver location");
@@ -129,15 +117,19 @@ const DriverTracking = () => {
         }
     },[client])
 
+    // google map
+    // useEffect(()=>{
+    //     console.log("driverPosition: ",driverPosition);
+    //     console.log("passengerPosition: ",passengerPosition);
+    // },[
+    //     driverPosition,passengerPosition
+    // ])
 
     return (
         <div>
             <Map start={driverPosition} end={passengerPosition}></Map>
-            <div>
-                <button>pick up passenger</button>
-            </div>
         </div>
     )
 }
 
-export default DriverTracking;
+export default PassengerTracking

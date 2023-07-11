@@ -25,3 +25,8 @@ export interface ConnectionOptions {
     username: string;
     password: string;
 }
+
+export interface Position {
+    lat: number;
+    lng: number;
+}

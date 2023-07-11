@@ -2,12 +2,14 @@ import React, {useEffect, useState} from "react";
 import axios from "axios";
 import CreateRide from "../../components/CreateRide";
 import { serverUrl } from "../../constant";
+import { useNavigate } from "react-router-dom";
 
 const Passenger = () => {
 
     const [isLoading, setIsLoading] = useState(false);
     const [rides, setRides] = useState<any>([]);
     const [fetchSuccess, setFetchSuccess] = useState(false);
+    const navigate = useNavigate();
 
     const fetchRidesAccepted = async () => {
         setIsLoading(true);
@@ -17,13 +19,35 @@ const Passenger = () => {
             const rides = response.data.data;
             setRides(rides);
             setIsLoading(false);
-            setFetchSuccess(true);
-            console.log("fetch rides success");
+            if(rides.length>0) { setFetchSuccess(true);}
+            console.log("fetch rides: ",rides);
         } catch (error) {
             console.log(error);
             setIsLoading(false);
         }
     }
+
+    const getTrackChannel = async (rideId:string) => {
+        try {
+            const res = await axios.get(`${serverUrl}/ride/track/${rideId}`);
+            const channelName = res.data.data;
+            console.log("channelName: " + channelName);
+            return channelName;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    //跳转到rides的第一个
+    useEffect(()=>{
+        if(rides.length>0) {
+            getTrackChannel(rides[0].id).then((channelName)=>{
+                navigate(`/passenger/${rides[0].id}/${channelName}`);
+            }).catch((error)=>{
+                console.log(error);
+            })
+        }
+    },[rides])
 
     // fetch ride every 5 seconds
     useEffect(()=>{
