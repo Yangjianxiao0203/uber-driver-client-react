@@ -19,9 +19,9 @@ const MapHome = ({start,end}:MapProps) => {
         libraries: ["places"]
     });
     return (
-        <div>
+        <>
             {isLoaded ? <Map start={start} end ={end}/> : <div>Loading...</div>}
-        </div>
+        </>
     )
 }
 
@@ -75,7 +75,7 @@ const Map=({start,end}:MapProps)=>{
     }, [start, end]);
 
     return (
-        <div className="map">
+        <div className="map map-container">
             <GoogleMap
             zoom={10}
             mapContainerClassName="map-container"

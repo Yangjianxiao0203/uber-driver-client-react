@@ -1,10 +1,12 @@
 import exp from "constants";
 import mqtt,{ MqttClient } from "mqtt";
-import React,{useState,useEffect} from "react";
+import React,{useState,useEffect,useCallback} from "react";
 import { useParams } from "react-router-dom";
-import { ConnectionOptions } from "../../constant";
+import { ConnectionOptions, serverUrl } from "../../constant";
 import { Position } from "../../constant";
 import Map from "../../components/Map";
+import axios from "axios";
+import '../../App.scss'
 
 
 const connectionOptions: ConnectionOptions = {
@@ -34,7 +36,6 @@ const DriverTracking = () => {
     const [ride, setRide] = useState<any>(null);
     const [driverPosition, setDriverPosition] = useState<Position>({ lat: 0, lng: 0});
     const [passengerPosition, setPassengerPosition] = useState<Position>({ lat: 0, lng: 0});
-    const [pathCoordinates, setPathCoordinates] = useState<Position[]>([]);
     const [speed, setSpeed] = useState(0);
     const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
@@ -43,7 +44,7 @@ const DriverTracking = () => {
     connectionOptions.password = rid+Math.random().toString(16).substr(2, 8);
     const connectUrl = `${connectionOptions.protocol}://${connectionOptions.host}:${connectionOptions.port}${connectionOptions.endpoint}`;
 
-    const mqttConnection = (connectUrl:string,connectionOptions:ConnectionOptions,channelName:string) => {
+    const mqttConnection = useCallback((connectUrl:string,connectionOptions:ConnectionOptions,channelName:string) => {
         const mqttClient = mqtt.connect(connectUrl, connectionOptions);
         mqttClient.on("connect", () => {
             setConnecting(false);
@@ -71,31 +72,39 @@ const DriverTracking = () => {
             console.log("Connection failed", error);
           });
         return mqttClient;
-    }
+    },[])
+
+    const receivePassengerPosition = useCallback((topic:string,message:Buffer) => {
+        console.log(`Received message on ${topic}: ${message.toString()}`);
+        const msgData = JSON.parse(message.toString());
+        console.log("msgData: ",msgData);
+        if(msgData.user==="Driver") {
+            console.log("Driver");
+            return;
+        }
+        setPassengerPosition({ lat: msgData.lat, lng: msgData.lng });
+        setRideStatus(msgData.action);
+    },[])
+
     useEffect(() => {
         setConnecting(true);
         const mqttClient = mqttConnection(connectUrl,connectionOptions,channelName);
+        mqttClient.on('message', receivePassengerPosition);
         setClient(mqttClient);
         console.log("mqttClient: ",mqttClient);
-
-        mqttClient.on('message', function (topic, message) {
-            console.log(`Received message on ${topic}: ${message.toString()}`);
-            const msgData = JSON.parse(message.toString());
-            console.log("msgData: ",msgData);
-            setPassengerPosition({ lat: msgData.lat, lng: msgData.lng });
-            setRideStatus(msgData.action);
-        });
+        console.log("reconncting time: ",reconnectAttempts);
 
         return () => {
             mqttClient.end();
         }
     },[reconnectAttempts])
 
+
     //rideStatus
     const [rideStatus,setRideStatus] = useState("");
 
     //get driver current position
-    const getDriverPosition = () => {
+    const getDriverPosition = useCallback(() => {
         navigator.geolocation.getCurrentPosition((position) => {
             const { latitude, longitude } = position.coords;
             const currentPosition : Position= { lat: latitude, lng: longitude };
@@ -103,24 +112,26 @@ const DriverTracking = () => {
 
             if(startPosition === null) { startPosition = currentPosition;}
             const message = {
+                user:"Driver",
                 lat: latitude,
                 lng: longitude,
-                action:rideStatus
+                action:rideStatus,
+                rid:rid,
             }
             client!.publish(channelName, JSON.stringify(message));
         },
         (error) => {
             console.log('Geolocation Error: ', error);
         })
-    }
+    },[client])
 
-    
+
     useEffect(() => {
         let interval:any;
         if(client) {
             interval = setInterval(() => {
                 getDriverPosition();
-            }, 2000)
+            }, 5000)
         } else {
             console.log("client is not ready, cannot get driver location");
         }
@@ -130,14 +141,41 @@ const DriverTracking = () => {
     },[client])
 
 
+    const pickUpPassengerHandler = useCallback (async () => {
+        setRideStatus("PickedUpPassenger")
+        client!.removeListener('message', receivePassengerPosition);
+        console.log("pickedup passenger ");
+        // get the destination of the ride
+        try {
+            const response = await axios(`${serverUrl}/ride/${rid}?lat=0.00&long=0.00`);
+            const destination =response.data.data.ride.endPointCoordinates;
+            console.log("destination: ",destination);
+            const arr = destination.split(",");
+            const message = {
+                user:"Driver",
+                lat: parseFloat(arr[0]),
+                lng: parseFloat(arr[1]),
+                action:"PickedUpPassenger",
+                rid:rid,
+            }
+            setPassengerPosition({ lat: parseFloat(arr[0]), lng: parseFloat(arr[1]) });
+            client!.publish(channelName, JSON.stringify(message));
+
+        } catch (error) {
+            console.log(error);
+        }
+    },[client])
+
     return (
-        <div>
-            <Map start={driverPosition} end={passengerPosition}></Map>
+        <div className="full">
             <div>
-                <button>pick up passenger</button>
+                <button onClick={pickUpPassengerHandler}>pick up passenger</button>
             </div>
+            <Map start={driverPosition} end={passengerPosition}></Map>
         </div>
     )
 }
 
 export default DriverTracking;
+
+

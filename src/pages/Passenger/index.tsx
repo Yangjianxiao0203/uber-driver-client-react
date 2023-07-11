@@ -39,15 +39,15 @@ const Passenger = () => {
     }
 
     //跳转到rides的第一个
-    useEffect(()=>{
-        if(rides.length>0) {
-            getTrackChannel(rides[0].id).then((channelName)=>{
-                navigate(`/passenger/${rides[0].id}/${channelName}`);
-            }).catch((error)=>{
-                console.log(error);
-            })
-        }
-    },[rides])
+    // useEffect(()=>{
+    //     if(rides.length>0) {
+    //         getTrackChannel(rides[0].id).then((channelName)=>{
+    //             navigate(`/passenger/${rides[0].id}/${channelName}`);
+    //         }).catch((error)=>{
+    //             console.log(error);
+    //         })
+    //     }
+    // },[rides])
 
     // fetch ride every 5 seconds
     useEffect(()=>{
@@ -75,6 +75,7 @@ const Passenger = () => {
                             <p>Ending point: {item.endPointAddress}</p>
                             <p>Estimated ride length: {item.rideLength}</p>
                             <p>Driver: {item.driverUid}</p>
+                            <button onClick={()=>getTrackChannel(item.id).then((channelName)=> navigate(`/passenger/${rides[0].id}/${channelName}`))}>Tracking</button>
                         </div>
                     )
                 })

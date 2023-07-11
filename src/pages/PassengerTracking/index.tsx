@@ -1,9 +1,9 @@
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useState,useEffect } from "react"
 import { ConnectionOptions,Position } from "../../constant"
 import mqtt,{ MqttClient } from "mqtt"
 import Map from "../../components/Map"
-
+import '../../App.scss'
 const connectionOptions: ConnectionOptions = {
     protocol: "ws",
     host: "localhost",
@@ -25,12 +25,11 @@ const PassengerTracking: React.FC = () => {
 
     const [client, setClient] = useState<MqttClient | null>(null);
     const [connecting, setConnecting] = useState(false);
-    const [ride, setRide] = useState<any>(null);
     const [driverPosition, setDriverPosition] = useState<Position>({ lat: 0, lng: 0});
     const [passengerPosition, setPassengerPosition] = useState<Position>({ lat: 0, lng: 0});
-    const [pathCoordinates, setPathCoordinates] = useState<Position[]>([]);
     const [speed, setSpeed] = useState(0);
     const [reconnectAttempts, setReconnectAttempts] = useState(0);
+    const navigate = useNavigate();
 
     //connecting to mqtt broker
     connectionOptions.username = "track-"+rid+"passenger";
@@ -71,20 +70,25 @@ const PassengerTracking: React.FC = () => {
         const mqttClient = mqttConnection(connectUrl,connectionOptions,channelName);
         setClient(mqttClient);
         console.log("mqttClient: ",mqttClient);
+
         mqttClient.on('message', function (topic, message) {
             const msgData = JSON.parse(message.toString());
             console.log("msgData: ",msgData);
+            if(msgData.user==="Passenger") {
+                return;
+            }
             setDriverPosition({ lat: msgData.lat, lng: msgData.lng });
-            setRideStatus(msgData.action);
+            if( msgData.action!=="") {
+                console.log("set rideStatus global: ",msgData.action);
+                // navigate to following page
+                navigate("/passenger");
+            }
         });
 
         return () => {
             mqttClient.end();
         }
     },[reconnectAttempts])
-
-    //rideStatus
-    const [rideStatus,setRideStatus] = useState("");
 
     //get driver current position
     const getPassengerPosition = () => {
@@ -93,9 +97,11 @@ const PassengerTracking: React.FC = () => {
             const currentPosition : Position= { lat: latitude-0.1, lng: longitude-0.1 };
             setPassengerPosition(currentPosition);
             const message = {
+                user:"Passenger",
                 lat: currentPosition.lat,
                 lng: currentPosition.lng,
-                action:rideStatus
+                action:"",
+                rid:rid
             }
             client!.publish(channelName, JSON.stringify(message));
         },
@@ -108,25 +114,18 @@ const PassengerTracking: React.FC = () => {
         if(client) {
             interval = setInterval(() => {
                 getPassengerPosition();
-            }, 2000)
+            }, 5000)
         } else {
-            console.log("client is not ready, cannot get driver location");
+            console.log("client is null or rideStatus is changed");
+            clearInterval(interval);
         }
         return () => {
             clearInterval(interval);
         }
     },[client])
 
-    // google map
-    // useEffect(()=>{
-    //     console.log("driverPosition: ",driverPosition);
-    //     console.log("passengerPosition: ",passengerPosition);
-    // },[
-    //     driverPosition,passengerPosition
-    // ])
-
     return (
-        <div>
+        <div className="full">
             <Map start={driverPosition} end={passengerPosition}></Map>
         </div>
     )
