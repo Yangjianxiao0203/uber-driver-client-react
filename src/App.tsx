@@ -12,6 +12,7 @@ import AuthProvider from './utils/AuthProvider';
 import DriverTracking from './pages/DriverTracking';
 import Map from './components/Map';
 import PassengerTracking from './pages/PassengerTracking';
+import PassengerTrackOnRide from './pages/PassengerTrackOnRide';
 
 function App() {
 
@@ -26,6 +27,7 @@ function App() {
           <Route path='/passenger' element={<Passenger />}/>
           <Route path='/driver/:rid/:channelName' element={<DriverTracking />} />
           <Route path='/passenger/:rid/:channelName' element={<PassengerTracking />} />
+          <Route path='/passenger/track/onRide/:rid/:channelName' element={<PassengerTrackOnRide />} />
         </Routes>
       </Router>
     </AuthProvider>

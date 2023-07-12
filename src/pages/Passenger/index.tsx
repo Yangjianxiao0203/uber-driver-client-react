@@ -75,7 +75,7 @@ const Passenger = () => {
                             <p>Ending point: {item.endPointAddress}</p>
                             <p>Estimated ride length: {item.rideLength}</p>
                             <p>Driver: {item.driverUid}</p>
-                            <button onClick={()=>getTrackChannel(item.id).then((channelName)=> navigate(`/passenger/${rides[0].id}/${channelName}`))}>Tracking</button>
+                            <button onClick={()=>getTrackChannel(item.id).then((channelName)=> navigate(`/passenger/${item.id}/${channelName}`))}>Tracking</button>
                         </div>
                     )
                 })

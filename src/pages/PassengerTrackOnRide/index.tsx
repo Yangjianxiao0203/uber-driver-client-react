@@ -1,9 +1,10 @@
-import { useNavigate, useParams } from "react-router-dom"
-import { useState,useEffect } from "react"
-import { ConnectionOptions,Position } from "../../constant"
-import mqtt,{ MqttClient } from "mqtt"
-import Map from "../../components/Map"
-import '../../App.scss'
+import mqtt,{ MqttClient } from "mqtt";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ConnectionOptions, Position, serverUrl } from "../../constant";
+import Map from "../../components/Map";
+import axios from "axios";
+
 const connectionOptions: ConnectionOptions = {
     protocol: "ws",
     host: "localhost",
@@ -17,7 +18,7 @@ const connectionOptions: ConnectionOptions = {
     password: "",
 }
 
-const PassengerTracking: React.FC = () => {
+const PassengerTrackOnRide = () => {
     const {rid,channelName} = useParams<{rid:string, channelName:string}>();
     if(rid===undefined || channelName === undefined) {
         throw new Error("rid or channelName is undefined");
@@ -25,11 +26,9 @@ const PassengerTracking: React.FC = () => {
 
     const [client, setClient] = useState<MqttClient | null>(null);
     const [connecting, setConnecting] = useState(false);
-    const [driverPosition, setDriverPosition] = useState<Position>({ lat: 0, lng: 0});
-    const [passengerPosition, setPassengerPosition] = useState<Position>({ lat: 0, lng: 0});
-    const [speed, setSpeed] = useState(0);
     const [reconnectAttempts, setReconnectAttempts] = useState(0);
-    const navigate = useNavigate();
+    const [start , setStart] = useState<Position | undefined>();
+    const [end , setEnd] = useState<Position | undefined>();
 
     //connecting to mqtt broker
     connectionOptions.username = "track-"+rid+"passenger";
@@ -49,7 +48,6 @@ const PassengerTracking: React.FC = () => {
               }
             });
           });
-      
           mqttClient.on("reconnect", () => {
             console.log("Reconnecting...");
             if (reconnectAttempts >= 5) {
@@ -65,6 +63,8 @@ const PassengerTracking: React.FC = () => {
           });
         return mqttClient;
     }
+
+    //get current driver path
     useEffect(() => {
         setConnecting(true);
         const mqttClient = mqttConnection(connectUrl,connectionOptions,channelName);
@@ -76,11 +76,7 @@ const PassengerTracking: React.FC = () => {
             if(msgData.user==="Passenger") {
                 return;
             }
-            setDriverPosition({ lat: msgData.lat, lng: msgData.lng });
-            if( msgData.action!=="") {
-                // navigate to following page
-                navigate("/passenger/track/onRide/"+rid+"/"+channelName);
-            }
+            setStart({ lat:msgData.lat, lng:msgData.lng});
         });
 
         return () => {
@@ -88,46 +84,25 @@ const PassengerTracking: React.FC = () => {
         }
     },[reconnectAttempts])
 
-    //get driver current position
-    const getPassengerPosition = () => {
-        navigator.geolocation.getCurrentPosition((position) => {
-            const { latitude, longitude, speed } = position.coords;
-            const currentPosition : Position= { lat: latitude-0.1, lng: longitude-0.1 };
-            setPassengerPosition(currentPosition);
-            const message = {
-                user:"Passenger",
-                lat: currentPosition.lat,
-                lng: currentPosition.lng,
-                action:"",
-                rid:rid,
-                speed:speed
-            }
-            client!.publish(channelName, JSON.stringify(message));
-        },
-        (error) => {
-            console.log('Geolocation Error: ', error);
-        })
-    }
+
+    //get destination
     useEffect(() => {
-        let interval:any;
-        if(client) {
-            interval = setInterval(() => {
-                getPassengerPosition();
-            }, 5000)
-        } else {
-            console.log("client is null or rideStatus is changed");
-            clearInterval(interval);
-        }
-        return () => {
-            clearInterval(interval);
-        }
-    },[client])
+        axios.get(`${serverUrl}/ride/${rid}?lat=0&long=0`).then((res) => {
+            return res.data.data.ride;
+        }).then((ride) => {
+            const destination = ride.endPointCoordinates.split(",");
+            setEnd({lat:parseFloat(destination[0]),lng:parseFloat(destination[1])});
+        }).
+        catch((err) => {
+            console.log("err: ",err);
+        });
+    },[])
+
 
     return (
         <div className="full">
-            <Map start={driverPosition} end={passengerPosition}></Map>
+            <Map start={start} end={end}></Map>
         </div>
     )
 }
-
-export default PassengerTracking
+export default PassengerTrackOnRide;

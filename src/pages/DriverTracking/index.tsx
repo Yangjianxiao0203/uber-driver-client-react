@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import exp from "constants";
 import mqtt,{ MqttClient } from "mqtt";
 import React,{useState,useEffect,useCallback} from "react";
@@ -7,6 +8,7 @@ import { Position } from "../../constant";
 import Map from "../../components/Map";
 import axios from "axios";
 import '../../App.scss'
+import { useNavigate } from "react-router-dom";
 
 
 const connectionOptions: ConnectionOptions = {
@@ -38,6 +40,7 @@ const DriverTracking = () => {
     const [passengerPosition, setPassengerPosition] = useState<Position>({ lat: 0, lng: 0});
     const [speed, setSpeed] = useState(0);
     const [reconnectAttempts, setReconnectAttempts] = useState(0);
+    const navigate = useNavigate();
 
     //connecting to mqtt broker
     connectionOptions.username = "track-"+rid;
@@ -75,11 +78,8 @@ const DriverTracking = () => {
     },[])
 
     const receivePassengerPosition = useCallback((topic:string,message:Buffer) => {
-        console.log(`Received message on ${topic}: ${message.toString()}`);
         const msgData = JSON.parse(message.toString());
-        console.log("msgData: ",msgData);
         if(msgData.user==="Driver") {
-            console.log("Driver");
             return;
         }
         setPassengerPosition({ lat: msgData.lat, lng: msgData.lng });
@@ -91,8 +91,6 @@ const DriverTracking = () => {
         const mqttClient = mqttConnection(connectUrl,connectionOptions,channelName);
         mqttClient.on('message', receivePassengerPosition);
         setClient(mqttClient);
-        console.log("mqttClient: ",mqttClient);
-        console.log("reconncting time: ",reconnectAttempts);
 
         return () => {
             mqttClient.end();
@@ -106,10 +104,14 @@ const DriverTracking = () => {
     //get driver current position
     const getDriverPosition = useCallback(() => {
         navigator.geolocation.getCurrentPosition((position) => {
-            const { latitude, longitude } = position.coords;
+            const { latitude, longitude,speed } = position.coords;
             const currentPosition : Position= { lat: latitude, lng: longitude };
             setDriverPosition(currentPosition);
-
+            if(speed!=null) {
+                setSpeed(speed+10); // beacuse my phone is not moving
+            } else {
+                setSpeed(10);
+            }
             if(startPosition === null) { startPosition = currentPosition;}
             const message = {
                 user:"Driver",
@@ -117,6 +119,7 @@ const DriverTracking = () => {
                 lng: longitude,
                 action:rideStatus,
                 rid:rid,
+                speed:speed
             }
             client!.publish(channelName, JSON.stringify(message));
         },
@@ -125,22 +128,25 @@ const DriverTracking = () => {
         })
     },[client])
 
-
+    // get driver position and send out every 5 seconds
     useEffect(() => {
         let interval:any;
-        if(client) {
+        console.log("rideStatus: ",rideStatus);
+        if(client&& rideStatus!=="Arrived") {
+            console.log("start time clicker for get driver position")
             interval = setInterval(() => {
                 getDriverPosition();
             }, 5000)
         } else {
             console.log("client is not ready, cannot get driver location");
+            clearInterval(interval);
         }
         return () => {
             clearInterval(interval);
         }
-    },[client])
+    },[client,rideStatus])
 
-
+    // when driver click the button, send out the picked up message
     const pickUpPassengerHandler = useCallback (async () => {
         setRideStatus("PickedUpPassenger")
         client!.removeListener('message', receivePassengerPosition);
@@ -157,6 +163,7 @@ const DriverTracking = () => {
                 lng: parseFloat(arr[1]),
                 action:"PickedUpPassenger",
                 rid:rid,
+                speed:speed
             }
             setPassengerPosition({ lat: parseFloat(arr[0]), lng: parseFloat(arr[1]) });
             client!.publish(channelName, JSON.stringify(message));
@@ -166,10 +173,41 @@ const DriverTracking = () => {
         }
     },[client])
 
+    //if speed >0, then set status to onRide
+    useEffect(() => {
+        if(speed>0 && rideStatus==="PickedUpPassenger") {
+            setRideStatus("OnRide");
+            const message = {
+                user:"Driver",
+                lat: driverPosition.lat,
+                lng: driverPosition.lng,
+                action:"OnRide",
+                rid:rid,
+                speed:speed
+            }
+            client!.publish(channelName, JSON.stringify(message));
+        }
+    },[speed,rideStatus])
+
+    //when driver arrived
+    const arrivedHandler = useCallback(async () => {
+        setRideStatus("Arrived");
+        const message = {
+            user:"Driver",
+            lat: driverPosition.lat,
+            lng: driverPosition.lng,
+            action:"Arrived",
+            rid:rid,
+            speed:speed
+        }
+        client!.publish(channelName, JSON.stringify(message));
+    },[client])
+
     return (
         <div className="full">
-            <div>
+            <div style={{display:"flex",flexDirection:"row"}}>
                 <button onClick={pickUpPassengerHandler}>pick up passenger</button>
+                <button onClick={arrivedHandler} style={{marginLeft:20}}>Arrived</button>
             </div>
             <Map start={driverPosition} end={passengerPosition}></Map>
         </div>
