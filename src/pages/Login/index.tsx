@@ -34,7 +34,7 @@ const Login = () => {
             const token = response.data.data;
             localStorage.setItem('token', token);
             setAuthToken(token);
-            navigate('/passenger');
+            navigate('/');
         } catch (error) {
             console.log(error);
         }

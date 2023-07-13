@@ -1,8 +1,6 @@
 import React from 'react';
 import './App.scss';
 import { Route,Routes,BrowserRouter as Router } from 'react-router-dom';
-import GoogleMap from './pages/GoogleMap';
-import MqttConnector from './components/MqttConnector';
 import Root from './pages/Root';
 import Register from './pages/Register';
 import Login from './pages/Login';
@@ -10,7 +8,6 @@ import Driver from './pages/Driver';
 import Passenger from './pages/Passenger';
 import AuthProvider from './utils/AuthProvider';
 import DriverTracking from './pages/DriverTracking';
-import Map from './components/Map';
 import PassengerTracking from './pages/PassengerTracking';
 import PassengerTrackOnRide from './pages/PassengerTrackOnRide';
 
