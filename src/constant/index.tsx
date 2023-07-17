@@ -30,3 +30,20 @@ export interface Position {
     lat: number;
     lng: number;
 }
+
+export const googleAPIKey="AIzaSyAHlGuFEKxf_fu8QdgeTObUHqkFRLAMfpM"
+
+export interface OrderCreationRequestProps {
+    uid:string | undefined;
+    pickUpLong:string | undefined;
+    pickUpLat:string | undefined;
+    pickUpResolvedAddress:string | undefined;
+    desLong:string | undefined;
+    desLat:string | undefined;
+    desResolvedAddress:string | undefined ;
+    type: 'Economy' | 'Comfort' | 'Luxury' | undefined;
+    province:string | undefined;
+    city:string | undefined;
+    rideLength:string | undefined;
+
+}

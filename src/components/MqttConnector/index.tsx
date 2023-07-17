@@ -28,8 +28,6 @@ const MqttConnector = ({userName,password,topic,qos,setForm}:MqttConnectorProps)
     const [connecting, setConnecting] = useState(false);
 
     const [receivedMessage, setReceivedMessage] = useState('');
-
-
     const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
     const createConnection = () => {

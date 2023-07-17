@@ -154,6 +154,7 @@ const DriverTracking = () => {
         // get the destination of the ride
         try {
             const response = await axios(`${serverUrl}/ride/${rid}?lat=0.00&long=0.00`);
+            console.log("response: ",response);
             const destination =response.data.data.ride.endPointCoordinates;
             console.log("destination: ",destination);
             const arr = destination.split(",");
@@ -191,7 +192,6 @@ const DriverTracking = () => {
 
     //when driver arrived
     const arrivedHandler = useCallback(async () => {
-        setRideStatus("Arrived");
         const message = {
             user:"Driver",
             lat: driverPosition.lat,
@@ -200,7 +200,9 @@ const DriverTracking = () => {
             rid:rid,
             speed:speed
         }
+        console.log("arrived message", message);
         client!.publish(channelName, JSON.stringify(message));
+        setRideStatus("Arrived");
     },[client])
 
     return (

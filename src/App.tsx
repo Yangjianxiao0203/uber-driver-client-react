@@ -10,6 +10,10 @@ import AuthProvider from './utils/AuthProvider';
 import DriverTracking from './pages/DriverTracking';
 import PassengerTracking from './pages/PassengerTracking';
 import PassengerTrackOnRide from './pages/PassengerTrackOnRide';
+import SelectableMap from './components/SelectableMap';
+import SearchBox from './components/SelectableMap/components/SearchBox';
+import PassengerCallCar from './pages/PassengerCallCar';
+import PassengerWaitingPage from './pages/PassengerWaitingPage';
 
 function App() {
 
@@ -21,8 +25,12 @@ function App() {
           <Route path='/login' element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path='/driver' element={<Driver />}/>
-          <Route path='/passenger' element={<Passenger />}/>
           <Route path='/driver/:rid/:channelName' element={<DriverTracking />} />
+          
+          <Route path='/passenger' element={<Passenger />}/>
+          <Route path='/passenger/createRide' element={<PassengerCallCar />} />
+          <Route path='/passenger/waiting' element={<PassengerWaitingPage />} />
+
           <Route path='/passenger/:rid/:channelName' element={<PassengerTracking />} />
           <Route path='/passenger/track/onRide/:rid/:channelName' element={<PassengerTrackOnRide />} />
         </Routes>

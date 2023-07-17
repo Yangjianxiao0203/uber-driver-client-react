@@ -76,11 +76,11 @@ const PassengerTracking: React.FC = () => {
             if(msgData.user==="Passenger") {
                 return;
             }
-            setDriverPosition({ lat: msgData.lat, lng: msgData.lng });
             if( msgData.action!=="") {
                 // navigate to following page
                 navigate("/passenger/track/onRide/"+rid+"/"+channelName);
             }
+            setDriverPosition({ lat: msgData.lat, lng: msgData.lng });
         });
 
         return () => {

@@ -1,0 +1,14 @@
+.passengerCallCar__container{
+    display: flex;
+    flex-direction: row;
+    width: 100%; 
+
+    .googleMap__container{
+        position: relative;
+        width:80%;
+    }
+
+    .carTypeSelect__container{
+        width: 20%;
+    }
+}
