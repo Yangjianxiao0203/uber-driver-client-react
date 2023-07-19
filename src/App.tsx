@@ -16,6 +16,7 @@ import PassengerCallCar from './pages/PassengerCallCar';
 import PassengerWaitingPage from './pages/PassengerWaitingPage';
 import PaymentPopUp from './components/PaymentPopUp';
 import PassengerReview from './pages/PassengerReview';
+import PassengerHistory from './pages/PassengerHistory';
 
 function App() {
 
@@ -39,6 +40,8 @@ function App() {
           <Route path='/passenger/payment/:rid' element={<PaymentPopUp />} />
 
           <Route path='/passenger/review/:rid' element={<PassengerReview />} />
+
+          <Route path = '/passenger/history' element={<PassengerHistory />} />
 
         </Routes>
       </Router>
