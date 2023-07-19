@@ -5,9 +5,10 @@ import { useEffect,useState } from 'react';
 import { serverUrl } from '../../constant';
 import { AuthContext } from '../../utils/AuthProvider';
 import { useNavigate } from 'react-router-dom';
-
+import { getUser } from '../../utils/getUser';
 
 var interval: string | number | NodeJS.Timeout | undefined;
+var user:any  =null;
 const PassengerWaitingPage = () => {
 
     const [rides,setRides] = useState<any[]>([])
@@ -19,17 +20,20 @@ const PassengerWaitingPage = () => {
         console.log(rides)
     },[rides])
 
+    const getRides = async () => {
+        try {
+            const res = await axios.get(`${serverUrl}/ride/accepted`);
+            const ridesBackend = res.data.data;
+            setRides(ridesBackend);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     useEffect(()=>{
         axios.defaults.headers.common["x-auth-token"] = auth;
         interval = setInterval(()=>{
-            axios.get(`${serverUrl}/ride/accepted`)
-            .then(res=>{
-                const ridesBackend = res.data.data
-                setRides(ridesBackend)
-            })
-            .catch(err=>{
-                console.log(err)
-            })
+            getRides();
         },2000)
         if(!isTracking) {clearInterval(interval)};
         return () => clearInterval(interval)
@@ -39,8 +43,28 @@ const PassengerWaitingPage = () => {
         try {
             const res = await axios.get(`${serverUrl}/ride/track/${rideId}`);
             const channelName = res.data.data;
-            console.log("channelName: " + channelName);
             return channelName;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    const cancelRide = async (rideId:string) => {
+        try {
+            if(user==null) {
+                user= await getUser(auth);
+            }
+            const request = {
+                uid: user.uid,
+                cancel:true
+            }
+            const res = await axios.put(`${serverUrl}/ride/cancel/${rideId}`,request);
+            const status = res.data.status;
+            if(status === '0') {
+                getRides();
+            } else {
+                alert("cancel failed, please try again");
+            }
         } catch (error) {
             console.log(error);
         }
@@ -60,6 +84,7 @@ const PassengerWaitingPage = () => {
                             <p>Estimated ride length: {item.rideLength}</p>
                             <p>Driver: {item.driverUid}</p>
                             <button onClick={()=>getTrackChannel(item.id).then((channelName)=> navigate(`/passenger/${item.id}/${channelName}`))}>Tracking</button>
+                            <button onClick={()=>cancelRide(item.id)}>cancel</button>
                     </div>);
                 })
             }

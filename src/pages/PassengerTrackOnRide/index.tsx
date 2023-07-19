@@ -23,12 +23,14 @@ const PassengerTrackOnRide = () => {
     if(rid===undefined || channelName === undefined) {
         throw new Error("rid or channelName is undefined");
     }
-
+    const navigate = useNavigate();
     const [client, setClient] = useState<MqttClient | null>(null);
     const [connecting, setConnecting] = useState(false);
     const [reconnectAttempts, setReconnectAttempts] = useState(0);
     const [start , setStart] = useState<Position | undefined>();
     const [end , setEnd] = useState<Position | undefined>();
+    const [driver,setDriver] = useState<any>(null);
+    const [arrived,setArrived] = useState<boolean>(false);
 
     //connecting to mqtt broker
     connectionOptions.username = "track-"+rid+"passenger";
@@ -77,6 +79,10 @@ const PassengerTrackOnRide = () => {
                 return;
             }
             setStart({ lat:msgData.lat, lng:msgData.lng});
+            if(msgData.action==="Arrived") {
+              setArrived(true);
+              console.log("arrived");
+            }
         });
 
         return () => {
@@ -98,9 +104,29 @@ const PassengerTrackOnRide = () => {
         });
     },[])
 
+    //get driver info
+    useEffect(() => {
+      axios.get(`${serverUrl}/user/driver?rid=${rid}`).then((res)=>{
+        setDriver(res.data.data)
+      })
+    },[])
+
+    const {carNumber,carType} = driver || {carNumber:"",carType:""};
+
+    //when arrived, stop tracking and pop up the payment page
+    useEffect(()=>{
+      if(arrived) {
+        navigate(`/passenger/payment/${rid}`);
+      }
+    },[arrived])
 
     return (
         <div className="full">
+            <div style={{display:"flex",flexDirection:"column"}}>
+                    <h1>Driver Info: </h1>
+                    <h3>Car Number: {carNumber}</h3>
+                    <h3>Car Type: {carType}</h3>
+            </div>
             <Map start={start} end={end}></Map>
         </div>
     )

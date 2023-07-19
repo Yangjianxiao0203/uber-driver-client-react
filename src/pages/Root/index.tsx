@@ -38,7 +38,7 @@ export default function Root() {
             if (user.identity === "Driver") {
                 navigate('/driver');
             } else if (user.identity === "Passenger") {
-                navigate('/passenger');
+                navigate('/passenger/createRide');
             }
         } catch (error) {
             console.log(error);

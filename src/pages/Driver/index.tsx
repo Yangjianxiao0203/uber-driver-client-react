@@ -38,6 +38,10 @@ const Driver = () => {
     const [province, setProvince] = useState<string>("");
     const [city, setCity] = useState<string>("");
 
+    //选择自己的车牌号和车型
+    const [numberPlate, setNumberPlate] = useState<string>("");
+    const [vehicleInfo, setVehicleInfo] = useState<string>("");
+
     const authContext = useContext(AuthContext);
 
     const onSubmit = async (e:any) => {
@@ -50,6 +54,8 @@ const Driver = () => {
         try {
             const response = await axios.get(`${serverUrl}/user`);
             const user = response.data.data;
+            user.carNumber= numberPlate;
+            user.carType = vehicleInfo;
             user.province = province;
             user.city = city;
             const res = await axios.put(`${serverUrl}/user/${user.uid}`, user);
@@ -67,8 +73,8 @@ const Driver = () => {
             driverUid: driver.uid,
             longitude: position.longitude.toString(),
             latitude: position.latitude.toString(),
-            numberPlate: "",
-            vehicleInfo: ""
+            numberPlate: numberPlate,
+            vehicleInfo: vehicleInfo
         }
         try {
             const res= await axios.put(`${serverUrl}/ride/${rid}`,driverAcceptOrderRequest);
@@ -113,6 +119,14 @@ const Driver = () => {
                 <label>
                     City:
                     <input type="text" value={city} onChange={(e) => setCity(e.target.value)} />
+                </label>
+                <label>
+                    Number Plate:
+                    <input type="text" value={numberPlate} onChange={(e) => setNumberPlate(e.target.value)} />
+                </label>
+                <label>
+                    Vehicle Info:
+                    <input type="text" value={vehicleInfo} onChange={(e) => setVehicleInfo(e.target.value)} />
                 </label>
                 <input type="submit" value="Submit" />
             </form>

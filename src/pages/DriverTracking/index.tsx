@@ -188,7 +188,14 @@ const DriverTracking = () => {
             }
             client!.publish(channelName, JSON.stringify(message));
         }
+        if(rideStatus === 'Arrived') {
+            navigate(`/driver`);
+        }
     },[speed,rideStatus])
+
+    useEffect(() => {
+        console.log("speed: ",speed);
+    },[speed])
 
     //when driver arrived
     const arrivedHandler = useCallback(async () => {
@@ -203,7 +210,7 @@ const DriverTracking = () => {
         console.log("arrived message", message);
         client!.publish(channelName, JSON.stringify(message));
         setRideStatus("Arrived");
-    },[client])
+    },[client,driverPosition])
 
     return (
         <div className="full">

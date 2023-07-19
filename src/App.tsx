@@ -14,6 +14,8 @@ import SelectableMap from './components/SelectableMap';
 import SearchBox from './components/SelectableMap/components/SearchBox';
 import PassengerCallCar from './pages/PassengerCallCar';
 import PassengerWaitingPage from './pages/PassengerWaitingPage';
+import PaymentPopUp from './components/PaymentPopUp';
+import PassengerReview from './pages/PassengerReview';
 
 function App() {
 
@@ -33,6 +35,11 @@ function App() {
 
           <Route path='/passenger/:rid/:channelName' element={<PassengerTracking />} />
           <Route path='/passenger/track/onRide/:rid/:channelName' element={<PassengerTrackOnRide />} />
+
+          <Route path='/passenger/payment/:rid' element={<PaymentPopUp />} />
+
+          <Route path='/passenger/review/:rid' element={<PassengerReview />} />
+
         </Routes>
       </Router>
     </AuthProvider>
