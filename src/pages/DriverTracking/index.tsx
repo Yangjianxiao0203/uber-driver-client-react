@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import exp from "constants";
 import mqtt,{ MqttClient } from "mqtt";
-import React,{useState,useEffect,useCallback} from "react";
+import React,{useState,useEffect,useCallback,useContext} from "react";
 import { useParams } from "react-router-dom";
 import { ConnectionOptions, serverUrl } from "../../constant";
 import { Position } from "../../constant";
@@ -9,7 +9,8 @@ import Map from "../../components/Map";
 import axios from "axios";
 import '../../App.scss'
 import { useNavigate } from "react-router-dom";
-
+import { getUser } from "../../utils/getUser";
+import { AuthContext } from "../../utils/AuthProvider";
 
 const connectionOptions: ConnectionOptions = {
     protocol: "ws",
@@ -25,10 +26,11 @@ const connectionOptions: ConnectionOptions = {
 }
 
 var startPosition:Position | null =null;
-
+var user:any=null;
 const DriverTracking = () => {
 
     const {rid,channelName} = useParams<{rid:string, channelName:string}>();
+    const {auth} = useContext(AuthContext);
     if(rid===undefined || channelName === undefined) {
         throw new Error("rid or channelName is undefined");
     }
@@ -81,6 +83,9 @@ const DriverTracking = () => {
         const msgData = JSON.parse(message.toString());
         if(msgData.user==="Driver") {
             return;
+        } else if(msgData.user==null) {
+            console.log("ride cancelled by passenger");
+            navigate(`/driver`);
         }
         setPassengerPosition({ lat: msgData.lat, lng: msgData.lng });
         setRideStatus(msgData.action);
@@ -174,6 +179,28 @@ const DriverTracking = () => {
         }
     },[client])
 
+    const cancelHandler = useCallback(async (rideId:string) => {
+        try {
+            if(user==null) {
+                user= await getUser(auth);
+            }
+            const request = {
+                uid: user.uid,
+                cancel:true
+            }
+            const res = await axios.put(`${serverUrl}/ride/cancel/${rideId}`,request);
+            const status = res.data.status;
+            if(status === '0') {
+                console.log("cancel success");
+                navigate(`/driver`);
+            } else {
+                alert("cancel failed, please try again");
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    },[])
+
     //if speed >0, then set status to onRide
     useEffect(() => {
         if(speed>0 && rideStatus==="PickedUpPassenger") {
@@ -217,6 +244,7 @@ const DriverTracking = () => {
             <div style={{display:"flex",flexDirection:"row"}}>
                 <button onClick={pickUpPassengerHandler}>pick up passenger</button>
                 <button onClick={arrivedHandler} style={{marginLeft:20}}>Arrived</button>
+                <button onClick={()=>cancelHandler(rid)} style={{marginLeft:20}}>Cancel</button>
             </div>
             <Map start={driverPosition} end={passengerPosition}></Map>
         </div>

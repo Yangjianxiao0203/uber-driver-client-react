@@ -1,9 +1,12 @@
 import { useNavigate, useParams } from "react-router-dom"
-import { useState,useEffect } from "react"
-import { ConnectionOptions,Position } from "../../constant"
+import { useState,useEffect, useCallback, useContext } from "react"
+import { ConnectionOptions,Position, serverUrl } from "../../constant"
 import mqtt,{ MqttClient } from "mqtt"
 import Map from "../../components/Map"
 import '../../App.scss'
+import { getUser } from "../../utils/getUser"
+import { AuthContext } from "../../utils/AuthProvider"
+import axios from "axios"
 const connectionOptions: ConnectionOptions = {
     protocol: "ws",
     host: "localhost",
@@ -17,6 +20,8 @@ const connectionOptions: ConnectionOptions = {
     password: "",
 }
 
+var user:any=null;
+var cancelBySelf:boolean = false;
 const PassengerTracking: React.FC = () => {
     const {rid,channelName} = useParams<{rid:string, channelName:string}>();
     if(rid===undefined || channelName === undefined) {
@@ -29,6 +34,7 @@ const PassengerTracking: React.FC = () => {
     const [passengerPosition, setPassengerPosition] = useState<Position>({ lat: 0, lng: 0});
     const [speed, setSpeed] = useState(0);
     const [reconnectAttempts, setReconnectAttempts] = useState(0);
+    const {auth} = useContext(AuthContext);
     const navigate = useNavigate();
 
     //connecting to mqtt broker
@@ -73,8 +79,16 @@ const PassengerTracking: React.FC = () => {
 
         mqttClient.on('message', function (topic, message) {
             const msgData = JSON.parse(message.toString());
+            console.log(msgData);
             if(msgData.user==="Passenger") {
                 return;
+            } else if(msgData.user==null) {
+                console.log("cancelBySelf: ",cancelBySelf);
+                if(!cancelBySelf) {
+                    console.log("ride has been cancelled by driver");
+                    navigate("/passenger/waiting");
+                    return ;
+                }
             }
             if( msgData.action!=="") {
                 // navigate to following page
@@ -123,8 +137,34 @@ const PassengerTracking: React.FC = () => {
         }
     },[client])
 
+    //cancel button
+    const cancelHandler = useCallback(async (rideId:string) => {
+        try {
+            cancelBySelf = true;
+            if(user==null) {
+                user= await getUser(auth);
+            }
+            const request = {
+                uid: user.uid,
+                cancel:true
+            }
+            const res = await axios.put(`${serverUrl}/ride/cancel/${rideId}`,request);
+            const status = res.data.status;
+            if(status === '0') {
+                console.log("cancel success");
+                navigate(`/passenger/createRide`);
+            } else {
+                alert("cancel failed, please try again");
+            }
+        } catch (error) {
+            console.log(error);
+            cancelBySelf = false;
+        }
+    },[])
+
     return (
         <div className="full">
+            <button onClick={()=>cancelHandler(rid)}>cancel</button>
             <Map start={driverPosition} end={passengerPosition}></Map>
         </div>
     )

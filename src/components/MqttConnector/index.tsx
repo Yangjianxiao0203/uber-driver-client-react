@@ -84,7 +84,10 @@ const MqttConnector = ({userName,password,topic,qos,setForm}:MqttConnectorProps)
           setReceivedMessage(message.toString());
           console.log(`Received message ${message} from topic ${topic}`);
           setForm((prev) => {
-            //todo: if not created, delete it from the list
+            //todo: has been accepted by other driver, delete it from the list
+            if(newRide.status!=="Created") {
+              return prev.filter((ride:any)=>ride.id!==newRide.id)
+            }
             return [...prev,newRide]
           })
         });

@@ -40,6 +40,9 @@ const PassengerCallCar = () => {
         if(res.data.status==='0') {
             console.log(res.data.message)
             navigate(`/passenger/waiting`)
+        } else if(res.data.status==='400') {
+            console.log("unpaid order",res.data.data)
+            navigate(`/passenger/payment/${res.data.data}`)
         }
         else {
             console.log(res.data.message)
