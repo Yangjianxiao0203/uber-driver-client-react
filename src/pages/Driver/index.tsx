@@ -41,6 +41,7 @@ const Driver = () => {
     //选择自己的车牌号和车型
     const [numberPlate, setNumberPlate] = useState<string>("");
     const [vehicleInfo, setVehicleInfo] = useState<string>("");
+    const [form, setForm] = useState<any[]>([]);
 
     const authContext = useContext(AuthContext);
 
@@ -60,6 +61,8 @@ const Driver = () => {
             user.city = city;
             const res = await axios.put(`${serverUrl}/user/${user.uid}`, user);
             setDriver(user);
+            // set already existed rides in the channel
+
             setLoading(false);
         } catch (error) {
             console.log(error);
@@ -89,7 +92,6 @@ const Driver = () => {
     };
 
     // build up form
-    const [form, setForm] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const formElement = sortRides(form,position.latitude,position.longitude).map((rideItem:any)=>{
         return <RideItem item={rideItem} handleOrder={handleOrder} key={rideItem.id} isLoading={isLoading}/>

@@ -45,5 +45,6 @@ export interface OrderCreationRequestProps {
     province:string | undefined;
     city:string | undefined;
     rideLength:string | undefined;
+    rideTime:string | undefined;
 
 }

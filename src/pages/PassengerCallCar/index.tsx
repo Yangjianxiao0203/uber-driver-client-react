@@ -24,6 +24,7 @@ const PassengerCallCar = () => {
             desLat:end?.lat?.toString(),
             desResolvedAddress:undefined,
             rideLength:undefined,
+            rideTime:undefined,
             type: rideType,
             province:undefined,
             city:undefined

@@ -97,6 +97,7 @@ const Map = ({start,end,setStart,setEnd,ride}:MapProps) => {
     ride.city = dirArray?dirArray[1].trim() : undefined;
     ride.province = dirArray?dirArray[2].trim().split(" ")[0] : undefined;
     ride.rideLength = directions?.routes[0].legs[0].distance?.value.toString();
+    ride.rideTime = directions?.routes[0].legs[0].duration?.value.toString();
   }
 
   //get current position for centering the map
