@@ -62,7 +62,11 @@ const Driver = () => {
             const res = await axios.put(`${serverUrl}/user/${user.uid}`, user);
             setDriver(user);
             // set already existed rides in the channel
-
+            const channel=`ride-${province}-${city}`
+            const rides = await axios.get(`${serverUrl}/ride/channel/${channel}`).then(res=>res.data.data);
+            setForm((pre)=>{
+                return [...pre,...rides]
+            })
             setLoading(false);
         } catch (error) {
             console.log(error);
